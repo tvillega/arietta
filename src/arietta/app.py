@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request
 
 from arietta.core.auth import verify_github_signature
 from arietta.core.auth import get_installation_access_token
-from arietta.core.action import add_reaction, remove_label
+from arietta.core.action import add_reaction, rm_label, rm_milestone
 from arietta.core.action import add_label, add_milestone
 
 from dotenv import load_dotenv
@@ -46,13 +46,17 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, value):
             )
 
         elif command_type == "rm label":
-            return remove_label(f"{base_url}/issues/{issue_number}/labels", headers, value)
+            return rm_label(f"{base_url}/issues/{issue_number}/labels", headers, value)
 
         elif command_type == "add milestone":
             return add_milestone(f"{base_url}/milestones",
                           f"{base_url}/issues/{issue_number}",
                           headers,
                           value)
+
+        elif command_type == "rm milestone":
+            return rm_milestone(f"{base_url}/issues/{issue_number}",
+                                headers)
 
     except Exception:
         return False
@@ -94,17 +98,27 @@ def webhook():
     token           = get_installation_access_token(installation_id, PRIVATE_KEY_PATH, APP_ID)
     success         = False
 
+    cmd_type        = ""
+    value           = ""
+
     if command_str.startswith("add label "):
+        cmd_type = "add label"
         value   = command_str.removeprefix("add label ")
-        success = try_catch_action(token, repo_full_name, issue_number, "add label", value)
 
     elif command_str.startswith("rm label "):
+        cmd_type = "rm label"
         value = command_str.removeprefix("rm label ")
-        success = try_catch_action(token, repo_full_name, issue_number, "rm label", value)
 
     elif command_str.startswith("add milestone "):
+        cmd_type = "add milestone"
         value   = command_str.removeprefix("add milestone ")
-        success = try_catch_action(token, repo_full_name, issue_number, "add milestone", value)
+
+    elif command_str.startswith("rm milestone "):
+        cmd_type = "rm milestone"
+        value   = command_str.removeprefix("rm milestone ")
+
+    if cmd_type != "":
+        success = try_catch_action(token, repo_full_name, issue_number, cmd_type, value)
 
     # Feedback to understand if command failed or not
     reaction = THUMBS_UP if success else THUMBS_DOWN

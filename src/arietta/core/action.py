@@ -28,7 +28,7 @@ def add_label(labels_url, headers, value, base_url):
     return False
 
 
-def remove_label(labels_url, headers, value):
+def rm_label(labels_url, headers, value):
     remove_url = f"{labels_url}/{value}"
     response = requests.delete(remove_url, headers=headers)
 
@@ -51,4 +51,11 @@ def add_milestone(url_milestone, url_issue, headers, value):
         return False
 
     response = requests.patch(url_issue, headers=headers, json={"milestone": milestone_id})
+    return response.status_code == 200
+
+
+import requests
+
+def rm_milestone(url_issue, headers):
+    response = requests.patch(url_issue, headers=headers, json={"milestone": None})
     return response.status_code == 200
