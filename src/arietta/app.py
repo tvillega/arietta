@@ -4,8 +4,13 @@ from flask import Flask, jsonify, request
 
 from arietta.core.auth import verify_github_signature
 from arietta.core.auth import get_installation_access_token
-from arietta.core.action import add_reaction
+from arietta.core.action import add_reaction, remove_label
 from arietta.core.action import add_label, add_milestone
+
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -13,15 +18,14 @@ APP_ID           = os.environ.get("GITHUB_APP_ID")
 PRIVATE_KEY_PATH = os.environ.get("GITHUB_PRIVATE_KEY_PATH")
 WEBHOOK_SECRET   = os.environ.get("GITHUB_WEBHOOK_SECRET")
 PORT             = os.environ.get("PORT")
+BOT_NAME         = os.environ.get("BOT_NAME")
+USER_WHITELIST = [u.strip() for u in os.environ.get("USER_WHITELIST", "").split(",")]
 
 THUMBS_UP        = "+1"
 THUMBS_DOWN      = "-1"
 
 API_URL         = "https://api.github.com/repos"
-WHITELIST       = {"tvillega"}
-BOT_BASE_NAME   = "arietta"
-BOT_SUFIX       = " " # could be called like `arietta, add label bug`
-BOT_NAME        = BOT_BASE_NAME+BOT_SUFIX
+if BOT_NAME is not None: BOT_NAME+= " "
 
 
 def try_catch_action(token, repo_full_name, issue_number, command_type, value):
@@ -34,17 +38,22 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, value):
 
     try:
         if command_type == "add label":
-            add_label(f"{base_url}/issues/{issue_number}/labels",
-                      headers,
-                      value)
+            return add_label(
+                f"{base_url}/issues/{issue_number}/labels",
+                headers,
+                value,
+                base_url
+            )
+
+        elif command_type == "rm label":
+            return remove_label(f"{base_url}/issues/{issue_number}/labels", headers, value)
 
         elif command_type == "add milestone":
-            add_milestone(f"{base_url}/milestones",
+            return add_milestone(f"{base_url}/milestones",
                           f"{base_url}/issues/{issue_number}",
                           headers,
                           value)
 
-        return False
     except Exception:
         return False
 
@@ -67,7 +76,7 @@ def webhook():
     sender   = payload.get("sender", {})
     username = sender.get("login")
 
-    if username not in WHITELIST: # Only contributors
+    if username not in USER_WHITELIST: # Only contributors
         return jsonify({"status": "user not whitelisted"}), 200
 
     comment_body    = comment.get("body", "").strip()
@@ -86,11 +95,15 @@ def webhook():
     success         = False
 
     if command_str.startswith("add label "):
-        value   = command_str.removeprefix("add label ").strip()
-        success = try_catch_action(token, repo_full_name, issue_number, "add tag", value)
+        value   = command_str.removeprefix("add label ")
+        success = try_catch_action(token, repo_full_name, issue_number, "add label", value)
+
+    elif command_str.startswith("rm label "):
+        value = command_str.removeprefix("rm label ")
+        success = try_catch_action(token, repo_full_name, issue_number, "rm label", value)
 
     elif command_str.startswith("add milestone "):
-        value   = command_str.removeprefix("add milestone ").strip()
+        value   = command_str.removeprefix("add milestone ")
         success = try_catch_action(token, repo_full_name, issue_number, "add milestone", value)
 
     # Feedback to understand if command failed or not

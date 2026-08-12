@@ -3,9 +3,13 @@ services:
     build: .
     restart: always
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./private-key.pem:/app/private-key.pem:ro
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=0
 
   smee:
     image: node:lts-alpine

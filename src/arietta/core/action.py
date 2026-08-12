@@ -14,10 +14,25 @@ def add_reaction(url, token, reaction):
         json=payload
     )
 
-def add_label(url, headers, value):
-    # If label doesn't exist it gets created
+def add_or_create_label(url, headers, value):
     response = requests.post(url, headers=headers, json={"labels": [value]})
     return response.status_code == 200 or response.status_code == 201
+
+
+def add_label(labels_url, headers, value, base_url):
+    label_check_url = f"{base_url}/labels/{value}"
+    check_response = requests.get(label_check_url, headers=headers)
+
+    if check_response.status_code == 200:
+        return add_or_create_label(labels_url, headers, value)
+    return False
+
+
+def remove_label(labels_url, headers, value):
+    remove_url = f"{labels_url}/{value}"
+    response = requests.delete(remove_url, headers=headers)
+
+    return response.status_code == 200 or response.status_code == 204
 
 
 def add_milestone(url_milestone, url_issue, headers, value):
