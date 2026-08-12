@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request
 
 from arietta.core.auth import verify_github_signature
 from arietta.core.auth import get_installation_access_token
-from arietta.core.action import add_reaction, rm_label, rm_milestone
+from arietta.core.action import add_reaction, rm_label, rm_milestone, assign_self, unassign_self
 from arietta.core.action import add_label, add_milestone
 
 from dotenv import load_dotenv
@@ -20,6 +20,7 @@ WEBHOOK_SECRET   = os.environ.get("GITHUB_WEBHOOK_SECRET")
 PORT             = os.environ.get("PORT")
 BOT_NAME         = os.environ.get("BOT_NAME")
 USER_WHITELIST = [u.strip() for u in os.environ.get("USER_WHITELIST", "").split(",")]
+REPO_WHITELIST = [r.strip() for r in os.environ.get("REPO_WHITELIST", "").split(",")]
 
 THUMBS_UP        = "+1"
 THUMBS_DOWN      = "-1"
@@ -28,7 +29,7 @@ API_URL         = "https://api.github.com/repos"
 if BOT_NAME is not None: BOT_NAME+= " "
 
 
-def try_catch_action(token, repo_full_name, issue_number, command_type, value):
+def try_catch_action(token, repo_full_name, issue_number, command_type, username, value):
     """Executes the specific command requested by the user."""
     headers = {
         "Authorization": f"Bearer {token}",
@@ -58,6 +59,16 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, value):
             return rm_milestone(f"{base_url}/issues/{issue_number}",
                                 headers)
 
+        elif command_type == "self assign":
+            return assign_self(f"{base_url}/issues/{issue_number}",
+                               headers,
+                               username)
+
+        elif command_type == "self unassign":
+            return unassign_self(f"{base_url}/issues/{issue_number}",
+                                 headers,
+                                 username)
+
     except Exception:
         return False
 
@@ -76,19 +87,23 @@ def webhook():
     if action != "created": # Ignore edited messages
         return jsonify({"status": "ignored action"}), 200
 
-    comment  = payload.get("comment", {})
+    repo_full_name = payload.get("repository", {}).get("full_name")
+
+    if repo_full_name not in REPO_WHITELIST: # Only allowed repositories
+        return jsonify({"status": "repository not whitelisted"}), 200
+
     sender   = payload.get("sender", {})
     username = sender.get("login")
 
     if username not in USER_WHITELIST: # Only contributors
         return jsonify({"status": "user not whitelisted"}), 200
 
-    comment_body    = comment.get("body", "").strip()
-    comment_lower   = comment_body.lower()
-    comment_id      = comment.get("id")
+    comment       = payload.get("comment", {})
+    comment_body  = comment.get("body", "").strip()
+    comment_lower = comment_body.lower()
+    comment_id    = comment.get("id")
 
     installation_id = payload.get("installation", {}).get("id")
-    repo_full_name  = payload.get("repository", {}).get("full_name")
     issue_number    = payload.get("issue", {}).get("number")
 
     if not comment_lower.startswith(BOT_NAME):
@@ -117,8 +132,16 @@ def webhook():
         cmd_type = "rm milestone"
         value   = command_str.removeprefix("rm milestone ")
 
+    elif command_str.startswith("self assign "):
+        cmd_type = "self assign"
+        value   = command_str.removeprefix("self assign ")
+
+    elif command_str.startswith("self unassign "):
+        cmd_type = "self unassign"
+        value   = command_str.removeprefix("self unassign ")
+
     if cmd_type != "":
-        success = try_catch_action(token, repo_full_name, issue_number, cmd_type, value)
+        success = try_catch_action(token, repo_full_name, issue_number, cmd_type, username, value)
 
     # Feedback to understand if command failed or not
     reaction = THUMBS_UP if success else THUMBS_DOWN
