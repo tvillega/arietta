@@ -1,14 +1,14 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
 from arietta.core.auth import verify_github_signature
 from arietta.core.auth import get_installation_access_token
 from arietta.core.action import add_reaction, rm_label, rm_milestone, assign_self, unassign_self
 from arietta.core.action import add_label, add_milestone
-
-from dotenv import load_dotenv
-
+from arietta.core.enum import CommandType
+from arietta.core.sanitization import parse_command
 
 load_dotenv()
 
@@ -38,36 +38,49 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, username
     base_url = f"{API_URL}/{repo_full_name}"
 
     try:
-        if command_type == "add label":
-            return add_label(
-                f"{base_url}/issues/{issue_number}/labels",
-                headers,
-                value,
-                base_url
-            )
+        match command_type:
+            case CommandType.ADD_LABEL:
+                return add_label(
+                    f"{base_url}/issues/{issue_number}/labels",
+                    headers,
+                    value,
+                    base_url
+                )
 
-        elif command_type == "rm label":
-            return rm_label(f"{base_url}/issues/{issue_number}/labels", headers, value)
+            case CommandType.RM_LABEL:
+                return rm_label(
+                    f"{base_url}/issues/{issue_number}/labels",
+                    headers,
+                    value
+                )
 
-        elif command_type == "add milestone":
-            return add_milestone(f"{base_url}/milestones",
-                          f"{base_url}/issues/{issue_number}",
-                          headers,
-                          value)
+            case CommandType.ADD_MILESTONE:
+                return add_milestone(
+                    f"{base_url}/milestones",
+                    f"{base_url}/issues/{issue_number}",
+                    headers,
+                    value
+                )
 
-        elif command_type == "rm milestone":
-            return rm_milestone(f"{base_url}/issues/{issue_number}",
-                                headers)
+            case CommandType.RM_MILESTONE:
+                return rm_milestone(
+                    f"{base_url}/issues/{issue_number}",
+                    headers
+                )
 
-        elif command_type == "self assign":
-            return assign_self(f"{base_url}/issues/{issue_number}",
-                               headers,
-                               username)
+            case CommandType.SELF_ASSIGN:
+                return assign_self(
+                    f"{base_url}/issues/{issue_number}",
+                    headers,
+                    username
+                )
 
-        elif command_type == "self unassign":
-            return unassign_self(f"{base_url}/issues/{issue_number}",
-                                 headers,
-                                 username)
+            case CommandType.SELF_UNASSIGN:
+                return unassign_self(
+                    f"{base_url}/issues/{issue_number}",
+                    headers,
+                    username
+                )
 
     except Exception:
         return False
@@ -112,38 +125,11 @@ def webhook():
     command_str     = comment_body.removeprefix(BOT_NAME).strip()
     token           = get_installation_access_token(installation_id, PRIVATE_KEY_PATH, APP_ID)
     success         = False
+    cmd             = parse_command(command_str)
 
-    cmd_type        = ""
-    value           = ""
+    if cmd.type != CommandType.UNKNOWN:
+        success = try_catch_action(token, repo_full_name, issue_number, cmd.type, username, cmd.value)
 
-    if command_str.startswith("add label "):
-        cmd_type = "add label"
-        value   = command_str.removeprefix("add label ")
-
-    elif command_str.startswith("rm label "):
-        cmd_type = "rm label"
-        value = command_str.removeprefix("rm label ")
-
-    elif command_str.startswith("add milestone "):
-        cmd_type = "add milestone"
-        value   = command_str.removeprefix("add milestone ")
-
-    elif command_str.startswith("rm milestone "):
-        cmd_type = "rm milestone"
-        value   = command_str.removeprefix("rm milestone ")
-
-    elif command_str.startswith("self assign "):
-        cmd_type = "self assign"
-        value   = command_str.removeprefix("self assign ")
-
-    elif command_str.startswith("self unassign "):
-        cmd_type = "self unassign"
-        value   = command_str.removeprefix("self unassign ")
-
-    if cmd_type != "":
-        success = try_catch_action(token, repo_full_name, issue_number, cmd_type, username, value)
-
-    # Feedback to understand if command failed or not
     reaction = THUMBS_UP if success else THUMBS_DOWN
     add_reaction(f"{API_URL}/{repo_full_name}/issues/comments/{comment_id}/reactions",
                  token,
