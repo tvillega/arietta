@@ -35,13 +35,14 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, username
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json"
     }
-    base_url = f"{API_URL}/{repo_full_name}"
+    base_url  = f"{API_URL}/{repo_full_name}"
+    issue_url = f"{base_url}/issues/{issue_number}"
 
     try:
         match command_type:
             case CommandType.ADD_LABEL:
                 return add_label(
-                    f"{base_url}/issues/{issue_number}/labels",
+                    f"{issue_url}/labels",
                     headers,
                     value,
                     base_url
@@ -49,7 +50,7 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, username
 
             case CommandType.RM_LABEL:
                 return rm_label(
-                    f"{base_url}/issues/{issue_number}/labels",
+                    f"{issue_url}/labels",
                     headers,
                     value
                 )
@@ -57,27 +58,27 @@ def try_catch_action(token, repo_full_name, issue_number, command_type, username
             case CommandType.ADD_MILESTONE:
                 return add_milestone(
                     f"{base_url}/milestones",
-                    f"{base_url}/issues/{issue_number}",
+                    issue_url,
                     headers,
                     value
                 )
 
             case CommandType.RM_MILESTONE:
                 return rm_milestone(
-                    f"{base_url}/issues/{issue_number}",
+                    issue_url,
                     headers
                 )
 
             case CommandType.SELF_ASSIGN:
                 return assign_self(
-                    f"{base_url}/issues/{issue_number}",
+                    issue_url,
                     headers,
                     username
                 )
 
             case CommandType.SELF_UNASSIGN:
                 return unassign_self(
-                    f"{base_url}/issues/{issue_number}",
+                    issue_url,
                     headers,
                     username
                 )
