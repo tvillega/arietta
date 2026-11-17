@@ -7,7 +7,7 @@ COPY README.md .
 
 COPY src/ ./src/
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[deploy]"
 
 ENV PORT=5050
 

@@ -1,7 +1,7 @@
+# Mirrors pyproject.toml dependencies plus the `deploy` extra.
+# pyproject.toml is the single source of truth; prefer `pip install -e '.[dev,deploy]'`.
 Flask
-PyGithub
 gunicorn
-requests
-
 pyjwt
 python-dotenv
+requests

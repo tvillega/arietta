@@ -1,5 +1,10 @@
 .idea
+.directory
 .env
 dist/
+build/
 private-key.pem
 graphify-out/
+__pycache__/
+*.py[cod]
+.pytest_cache/
