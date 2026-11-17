@@ -132,7 +132,7 @@ cp .env-example .env
 | Variable | Description |
 |---|---|
 | `GITHUB_APP_ID` | Your GitHub App's numeric ID |
-| `GITHUB_PRIVATE_KEY_PATH` | Local path to the `.pem` private key file, e.g. `./private-key.pem`. |
+| `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file, e.g. `./private-key.pem` |
 | `GITHUB_WEBHOOK_SECRET` | The webhook secret configured on the GitHub App |
 | `BOT_NAME` | Exact command prefix users must type at the start of every comment, without a trailing space (e.g. `arietta`; Arietta appends the space). Comments with any other prefix are ignored. Required |
 | `PORT` | Port used by the Flask dev server locally and by Gunicorn inside the container (`.env-example` uses `5050`). In Docker Compose the container listens on `$PORT`, published on fixed host port `5000` |
