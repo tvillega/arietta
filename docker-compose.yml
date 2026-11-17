@@ -10,12 +10,3 @@ services:
       - .env
     environment:
       - PYTHONUNBUFFERED=0
-
-  smee:
-    image: node:lts-alpine
-    restart: always
-    command: >
-      sh -c "npm install -g smee-client &&
-             smee --url ${SMEE_URL} --target http://arietta-bot:5000/webhook"
-    depends_on:
-      - arietta-bot

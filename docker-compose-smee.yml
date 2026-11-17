@@ -1,3 +1,4 @@
+# Local development only: forwards a smee.io channel to a bot running on the host.
 services:
   smee:
     image: node:lts-alpine
