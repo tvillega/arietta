@@ -1,6 +1,6 @@
 # Arietta
 
-A lightweight GitHub App bot that gives granulated permissions to trusted contributors on personal (non-organizational) repositories. Whitelisted users issue commands via issue/PR comments, and Arietta applies labels or milestones on their behalf — reacting with 👍 on success or 👎 on failure.
+A lightweight GitHub App bot that gives granulated permissions to trusted contributors on personal (non-organizational) repositories. Whitelisted users issue commands via issue/PR comments, and Arietta applies labels or milestones on their behalf — reacting with 👍 on full success, 😕 when some commands succeed, or 👎 on failure.
 
 No database, no frontend, no background workers — just a single Flask webhook endpoint.
 
@@ -32,6 +32,24 @@ A quick win means nothing if I can't understand it. Overengineering is rejected,
 | `arietta self unassign` | `arietta self unassign` | Unassigns the commenting user |
 
 Anything after `--` is ignored by Arietta.
+
+### Multi-command blocks
+
+Use `do` to run several commands from a single comment. Each command goes on its own line prefixed with `- `, and `done` (with or without a leading `- `) ends the block. Everything after `done` is ignored, so you can add free-form text without `--`:
+
+```text
+arietta do
+- add label bug
+- rm milestone
+- done
+
+Custom text
+```
+
+The reaction is
+- 👍 when every command succeeds
+- 😕 when any command fail
+- 👎 when none succeed
 
 ## Project Layout
 

@@ -8,6 +8,7 @@ class CommandType(Enum):
     RM_MILESTONE = ("rm milestone", False)
     SELF_ASSIGN = ("self assign", False)
     SELF_UNASSIGN = ("self unassign", False)
+    DO = ("do", False)
     UNKNOWN = ("", False)
 
     @property

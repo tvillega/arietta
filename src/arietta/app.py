@@ -8,7 +8,7 @@ from arietta.core.auth import get_installation_access_token
 from arietta.core.action import add_reaction, rm_label, rm_milestone, assign_self, unassign_self
 from arietta.core.action import add_label, add_milestone
 from arietta.core.enum import CommandType
-from arietta.core.sanitization import parse_command, split_user_comment
+from arietta.core.sanitization import parse_commands, split_user_comment
 
 load_dotenv()
 
@@ -24,6 +24,7 @@ REPO_WHITELIST = [r.strip() for r in os.environ.get("REPO_WHITELIST", "").split(
 
 THUMBS_UP        = "+1"
 THUMBS_DOWN      = "-1"
+SAD_FACE         = "confused"  # GitHub has no sad-face reaction
 
 API_URL         = "https://api.github.com/repos"
 if BOT_NAME is not None: BOT_NAME+= " "
@@ -125,18 +126,31 @@ def webhook():
 
     command_str, _  = split_user_comment(comment_body.removeprefix(BOT_NAME))
     token           = get_installation_access_token(installation_id, PRIVATE_KEY_PATH, APP_ID)
-    success         = False
-    cmd             = parse_command(command_str)
+    commands        = parse_commands(command_str)
+    successes       = 0
+    failures        = 0
 
-    if cmd.type != CommandType.UNKNOWN:
-        success = try_catch_action(token, repo_full_name, issue_number, cmd.type, username, cmd.value)
+    for cmd in commands:
+        if try_catch_action(token, repo_full_name, issue_number, cmd.type, username, cmd.value):
+            successes += 1
+        else:
+            failures += 1
 
-    reaction = THUMBS_UP if success else THUMBS_DOWN
+    if successes and not failures:
+        reaction = THUMBS_UP
+        status = "success"
+    elif successes:
+        reaction = SAD_FACE
+        status = "partial success"
+    else:
+        reaction = THUMBS_DOWN
+        status = "failed command"
+
     add_reaction(f"{API_URL}/{repo_full_name}/issues/comments/{comment_id}/reactions",
                  token,
                  reaction)
 
-    return jsonify({"status": "success" if success else "failed command"}), 200
+    return jsonify({"status": status}), 200
 
 def main():
     app.run(port=PORT, debug=True)
