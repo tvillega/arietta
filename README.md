@@ -33,8 +33,6 @@ A quick win means nothing if I can't understand it. Overengineering is rejected,
 
 Anything after `--` is ignored by Arietta.
 
-The prefix must match `BOT_NAME` exactly. These examples use `arietta`; substitute your own configured prefix and use the same lowercase spelling — `arietta self assign` will be treated as an unknown command.
-
 ## Project Layout
 
 ```
