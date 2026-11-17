@@ -121,7 +121,7 @@ def webhook():
     issue_number    = payload.get("issue", {}).get("number")
 
     if not comment_lower.startswith(BOT_NAME):
-        return jsonify({"status": "not an arietta command"}), 200
+        return jsonify({"status": "not a bot command"}), 200
 
     command_str, _  = split_user_comment(comment_body.removeprefix(BOT_NAME))
     token           = get_installation_access_token(installation_id, PRIVATE_KEY_PATH, APP_ID)
