@@ -34,7 +34,7 @@ def generate_jwt(private_key_path, app_id):
     now = int(time.time())
     payload = {
         "iat": now,
-        "exp": now + 600,  # JWT expires in 10 minutes
+        "exp": now + 540,
         "iss": app_id
     }
     return jwt.encode(payload, private_key, algorithm="RS256")

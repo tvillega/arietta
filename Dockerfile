@@ -9,6 +9,6 @@ COPY src/ ./src/
 
 RUN pip install --no-cache-dir .
 
-EXPOSE 5000
+ENV PORT=5050
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "arietta.app:app"]
+CMD exec gunicorn --bind 0.0.0.0:${PORT} arietta.app:app

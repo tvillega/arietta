@@ -3,7 +3,7 @@ services:
     build: .
     restart: always
     ports:
-      - "5001:5000"
+      - "5000:${PORT}"
     volumes:
       - ./private-key.pem:/app/private-key.pem:ro
     env_file:

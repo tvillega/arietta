@@ -31,23 +31,9 @@ A quick win means nothing if I can't understand it. Overengineering is rejected,
 | `arietta self assign` | `arietta self assign` | Assigns the commenting user |
 | `arietta self unassign` | `arietta self unassign` | Unassigns the commenting user |
 
-Use `--` to append a note to a command without it becoming part of the command:
+Anything after `--` is ignored by Arietta.
 
-```text
-arietta self assign -- Taking this one, needs a review afterwards.
-```
-
-The delimiter can also be on its own line:
-
-```text
-arietta self assign
-
---
-
-Some context for this issue.
-```
-
-Anything after `--` is ignored by Arietta and stays in your comment.
+The prefix must match `BOT_NAME` exactly. These examples use `arietta`; substitute your own configured prefix and use the same lowercase spelling — `arietta self assign` will be treated as an unknown command.
 
 ## Project Layout
 
@@ -112,8 +98,8 @@ Arietta loads `.env` automatically via `python-dotenv`, so no manual `export` is
 | `GITHUB_APP_ID` | Your GitHub App's numeric ID |
 | `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file, e.g. `./private-key.pem` |
 | `GITHUB_WEBHOOK_SECRET` | The webhook secret configured on the GitHub App |
-| `BOT_NAME` | Command prefix without a trailing space (e.g. `arietta`); Arietta appends the space. Required — webhook handling fails if unset |
-| `PORT` | Flask dev-server port (default `5000`; `.env-example` uses `5050`) |
+| `BOT_NAME` | Exact command prefix users must type at the start of every comment, without a trailing space (e.g. `arietta`; Arietta appends the space). Comments with any other prefix are ignored. Required |
+| `PORT` | Port used by the Flask dev server locally and by Gunicorn inside the container (`.env-example` uses `5050`). In Docker Compose the container listens on `$PORT`, published on fixed host port `5000` |
 | `USER_WHITELIST` | Comma-separated GitHub usernames allowed to issue commands, e.g. `tvillega,your-username` |
 | `REPO_WHITELIST` | Comma-separated `owner/repo` names the bot may act on, e.g. `tvillega/arietta`; comments on other repositories are ignored |
 | `SMEE_URL` | [smee.io](https://smee.io) channel URL used by `docker-compose-smee.yml` to forward webhooks to a bot running on the host |
@@ -138,16 +124,16 @@ arietta
 docker compose up --build
 ```
 
-The bot is reachable on host port `5001` (mapped to container port `5000`); forward your proxy to `localhost:5001`.
+Gunicorn listens on `$PORT` inside the container; Docker Compose publishes it on fixed host port `5000`. Forward your proxy to `localhost:5000`.
 
 > [!NOTE]
-> For local development, run the bot on the host (`uv run python -m arietta`, port `5050`) and start only the smee sidecar:
+> For local development without a public webhook URL, start the bot with `docker compose up --build` and run the smee sidecar alongside it:
 >
 > ```bash
 > docker compose -f docker-compose-smee.yml up
 > ```
 >
-> It forwards your [smee.io](https://smee.io) channel to `localhost:5050/webhook`.
+> It uses host networking (Linux) to forward your [smee.io](https://smee.io) channel to `127.0.0.1:5000/webhook`, the bot's published port.
 
 ### 5. Configure the Whitelists
 
