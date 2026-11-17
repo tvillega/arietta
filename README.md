@@ -152,7 +152,6 @@ uv run python -m arietta
 **Production:**
 
 ```bash
-# Place your private key at ./private-key.pem
 docker compose up --build
 ```
 
