@@ -4,6 +4,14 @@ A lightweight GitHub App bot that gives granulated permissions to trusted contri
 
 No database, no frontend, no background workers — just a single Flask webhook endpoint.
 
+## Why
+
+GitHub's personal repositories work on an all-or-nothing fashion when it comes to permissions for collaborators.
+I just wanted to triage issues so I *designed* this solution for others to give me scoped permissions through the bot.
+
+This projects is openly pro-LLM's, however each change made by a model will get harshy reviewed by myself.
+A quick win means nothing if I can't understand it. Overengineering is rejected, this must stay simple.
+
 ## How It Works
 
 1. **GitHub delivers an `issue_comment` webhook** to `/webhook` whenever someone comments on an issue or PR.
