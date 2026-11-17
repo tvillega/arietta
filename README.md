@@ -52,6 +52,7 @@ arietta do
 - add milestone Deployment
 - self assign
 done
+```
 
 Anything after `done` is ignored.
 
