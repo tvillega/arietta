@@ -27,9 +27,27 @@ A quick win means nothing if I can't understand it. Overengineering is rejected,
 | `arietta add label <name>` | `arietta add label bug` | Adds an existing label to the issue/PR |
 | `arietta rm label <name>` | `arietta rm label bug` | Removes a label from the issue/PR |
 | `arietta add milestone <name>` | `arietta add milestone v1.0` | Assigns an existing milestone |
-| `arietta rm milestone <value>` | `arietta rm milestone v1.0` | Clears the milestone (value ignored) |
+| `arietta rm milestone` | `arietta rm milestone` | Clears the milestone |
 | `arietta self assign` | `arietta self assign` | Assigns the commenting user |
 | `arietta self unassign` | `arietta self unassign` | Unassigns the commenting user |
+
+Use `--` to append a note to a command without it becoming part of the command:
+
+```text
+arietta self assign -- Taking this one, needs a review afterwards.
+```
+
+The delimiter can also be on its own line:
+
+```text
+arietta self assign
+
+--
+
+Some context for this issue.
+```
+
+Anything after `--` is ignored by Arietta and stays in your comment.
 
 ## Project Layout
 

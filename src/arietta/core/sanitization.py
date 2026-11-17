@@ -1,38 +1,63 @@
 from arietta.core.enum import ParsedCommand, CommandType
 
-ADD_LABEL="add label "
-RM_LABEL="rm label "
-ADD_MILESTONE="add milestone "
-RM_MILESTONE="rm milestone "
-SELF_ASSIGN="self assign "
-SELF_UNASSIGN="self unassign "
+DELIMITER_STR = "--"
+
+
+def find_delimiter_pos(text: str) -> int | None:
+    """Returns the position of a standalone `--`, or None if absent."""
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        search_from = 0
+        while True:
+            position = line.find(DELIMITER_STR, search_from)
+            if position == -1:
+                break
+
+            before = line[:position]
+            after = line[position + len(DELIMITER_STR):]
+            if (not before or before[-1].isspace()) and (not after or after[0].isspace()):
+                return offset + position
+
+            search_from = position + len(DELIMITER_STR)
+
+        offset += len(line)
+
+    return None
+
+
+def split_user_comment(command_str: str) -> tuple[str, str]:
+    """Splits the command from any free-form text after the `--` delimiter."""
+    delimiter_index = find_delimiter_pos(command_str)
+
+    if delimiter_index is None:
+        command_text = command_str.strip()
+        comment_text = ""
+        return command_text, comment_text
+
+    command_text = command_str[:delimiter_index].strip()
+    comment_text_start = delimiter_index + len(DELIMITER_STR)
+    comment_text = command_str[comment_text_start:].strip()
+
+    return command_text, comment_text
+
 
 def parse_command(command_str: str) -> ParsedCommand:
     """Pre-processes a raw string into a structured ParsedCommand."""
+    command_str = command_str.strip()
 
-    if command_str.startswith(ADD_LABEL):
-        return ParsedCommand(CommandType.ADD_LABEL,
-                             command_str.removeprefix(ADD_LABEL))
+    for command in CommandType:
+        if command is CommandType.UNKNOWN:
+            continue
 
-    elif command_str.startswith(RM_LABEL):
-        return ParsedCommand(CommandType.RM_LABEL,
-                             command_str.removeprefix(RM_LABEL))
+        keyword = command.keyword
+        if command_str != keyword and not command_str.startswith(keyword + " "):
+            continue
 
-    elif command_str.startswith(ADD_MILESTONE):
-        return ParsedCommand(CommandType.ADD_MILESTONE,
-                             command_str.removeprefix(ADD_MILESTONE))
+        value = command_str[len(keyword):].strip()
+        if command.requires_value and not value:
+            break
 
-    elif command_str.startswith(RM_MILESTONE):
-        return ParsedCommand(CommandType.RM_MILESTONE,
-                             command_str.removeprefix(RM_MILESTONE))
-
-    elif command_str.startswith(SELF_ASSIGN):
-        return ParsedCommand(CommandType.SELF_ASSIGN,
-                             command_str.removeprefix(SELF_ASSIGN))
-
-    elif command_str.startswith(SELF_UNASSIGN):
-        return ParsedCommand(CommandType.SELF_UNASSIGN,
-                             command_str.removeprefix(SELF_UNASSIGN))
+        return ParsedCommand(command, value)
 
     return ParsedCommand(CommandType.UNKNOWN, command_str)
 
