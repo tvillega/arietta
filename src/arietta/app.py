@@ -8,7 +8,7 @@ from arietta.core.auth import get_installation_access_token
 from arietta.core.action import add_reaction, rm_label, rm_milestone, assign_self, unassign_self
 from arietta.core.action import add_label, add_milestone
 from arietta.core.enum import CommandType
-from arietta.core.sanitization import parse_command
+from arietta.core.sanitization import parse_command, split_user_comment
 
 load_dotenv()
 
@@ -123,7 +123,7 @@ def webhook():
     if not comment_lower.startswith(BOT_NAME):
         return jsonify({"status": "not an arietta command"}), 200
 
-    command_str     = comment_body.removeprefix(BOT_NAME).strip()
+    command_str, _  = split_user_comment(comment_body.removeprefix(BOT_NAME))
     token           = get_installation_access_token(installation_id, PRIVATE_KEY_PATH, APP_ID)
     success         = False
     cmd             = parse_command(command_str)
