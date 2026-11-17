@@ -62,6 +62,49 @@ def parse_command(command_str: str) -> ParsedCommand:
     return ParsedCommand(CommandType.UNKNOWN, command_str)
 
 
+def parse_do_block(command_str: str) -> list[ParsedCommand] | None:
+    """Parses a `do` block into commands, or returns None if it is invalid."""
+    lines = command_str.splitlines()
+    if not lines or lines[0].strip() != CommandType.DO.keyword:
+        return None
+
+    commands = []
+    for line in lines[1:]:
+        text = line.strip()
+
+        if text == "done" or text == "- done":
+            if not commands:
+                return None
+            return commands
+
+        if not text:
+            continue
+
+        if not text.startswith("- "):
+            return None
+
+        cmd = parse_command(text[2:].strip())
+        if cmd.type is CommandType.UNKNOWN or cmd.type is CommandType.DO:
+            return None
+
+        commands.append(cmd)
+
+    return None
+
+
+def parse_commands(command_str: str) -> list[ParsedCommand]:
+    """Parses either a `do` block or a single command, validating as it goes."""
+    commands = parse_do_block(command_str)
+    if commands is not None:
+        return commands
+
+    cmd = parse_command(command_str)
+    if cmd.type is CommandType.UNKNOWN or cmd.type is CommandType.DO:
+        return []
+
+    return [cmd]
+
+
 def execute_command(cmd: ParsedCommand):
     match cmd.type:
         case CommandType.ADD_LABEL:
