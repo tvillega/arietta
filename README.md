@@ -8,7 +8,7 @@ No database, no frontend, no background workers — just a single Flask webhook 
 
 1. **GitHub delivers an `issue_comment` webhook** to `/webhook` whenever someone comments on an issue or PR.
 2. Arietta **verifies the HMAC signature** (`X-Hub-Signature-256`) to ensure the payload is authentic.
-3. It checks that the comment author is in the **whitelist** and the comment starts with `arietta `.
+3. It checks that the repository and comment author are in the configured **whitelists** and that the comment starts with the configured `BOT_NAME` prefix.
 4. The bot parses the command, authenticates to GitHub via a short-lived **installation access token** (JWT → token exchange), and calls the GitHub REST API.
 5. A **thumbs-up/thumbs-down reaction** is added to the comment as feedback.
 
@@ -75,27 +75,34 @@ Copy the example and fill in your values:
 cp .env-example .env
 ```
 
-| Variable | Description |
-|---|---|
-| `GITHUB_APP_ID` | Your GitHub App's numeric ID |
-| `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file |
-| `GITHUB_WEBHOOK_SECRET` | The webhook secret you configured on GitHub |
-| `PORT` | Server port (default `5000`; `.env-example` uses `5050`) |
-| `SMEE_URL` | *(dev only)* Your [smee.io](https://smee.io) channel URL |
+Arietta loads `.env` automatically via `python-dotenv`, so no manual `export` is needed when running from the repository root. Docker Compose reads the same file.
 
-> [!IMPORTANT]
-> The app does **not** load `.env` files automatically (no `python-dotenv`). You must `export` the variables yourself or source the file: `set -a && source .env && set +a`.
+#### GitHub App credentials
+
+- `GITHUB_APP_ID` — Your GitHub App's numeric ID.
+- `GITHUB_PRIVATE_KEY_PATH` — Path to the `.pem` private key file, e.g. `./private-key.pem`.
+- `GITHUB_WEBHOOK_SECRET` — The webhook secret configured on the GitHub App.
+
+#### Bot settings
+
+- `BOT_NAME` — The command prefix, without a trailing space (e.g. `arietta`); Arietta appends the space itself. This variable must be set or webhook handling fails.
+- `PORT` — Flask dev-server port (default `5000`; `.env-example` uses `5050`).
+
+#### Whitelists
+
+- `USER_WHITELIST` — Comma-separated GitHub usernames allowed to issue commands, e.g. `tvillega,your-username`.
+- `REPO_WHITELIST` — Comma-separated `owner/repo` names the bot may act on, e.g. `tvillega/arietta`. Comments on other repositories are ignored.
+
+#### smee.io forwarding
+
+- `SMEE_URL` — The [smee.io](https://smee.io) channel URL used by `docker-compose-smee.yml` to forward webhooks to a bot running on the host.
 
 ### 4. Run
 
 **Development (Flask dev server):**
 
 ```bash
-export GITHUB_APP_ID=12345
-export GITHUB_PRIVATE_KEY_PATH=./private-key.pem
-export GITHUB_WEBHOOK_SECRET=your-secret
-export PORT=5050
-
+# Fill in .env first; it is loaded automatically.
 uv run python -m arietta
 # or after an editable install:
 arietta
@@ -121,13 +128,16 @@ The bot is reachable on host port `5001` (mapped to container port `5000`); forw
 >
 > It forwards your [smee.io](https://smee.io) channel to `localhost:5050/webhook`.
 
-### 5. Update the Whitelist
+### 5. Configure the Whitelists
 
-Edit the `WHITELIST` set in [`src/arietta/app.py`](file:///home/eddyizm/src/arietta/src/arietta/app.py#L21) to include the GitHub usernames allowed to issue commands:
+Whitelists are read from the environment; no code changes are needed. Set them in `.env` (see [Whitelists](#whitelists) above):
 
-```python
-WHITELIST = {"tvillega", "your-username"}
+```dotenv
+USER_WHITELIST=tvillega,your-username
+REPO_WHITELIST=tvillega/arietta,your-username/your-repo
 ```
+
+`USER_WHITELIST` controls who may issue commands; `REPO_WHITELIST` controls which repositories the bot will act on. Both are comma-separated lists.
 
 ## Architecture
 
@@ -149,11 +159,6 @@ sequenceDiagram
     A->>API: POST /comments/{id}/reactions (👍)
     A-->>GH: 200 {"status": "success"}
 ```
-
-## Known Issues
-
-- **Label commands always fail:** `webhook()` passes `"add tag"` as the command type, but `try_catch_action()` compares against `"add label"`. The branch never matches, so the function returns `False` and the bot reacts with 👎. See [`app.py` L88-90](file:///home/eddyizm/src/arietta/src/arietta/app.py#L88-L90).
-- **`try_catch_action` always returns `False`:** The success path (line 47) returns `False` instead of `True`, so even milestone commands that succeed get a 👎 reaction.
 
 ## License
 
