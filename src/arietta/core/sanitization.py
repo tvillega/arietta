@@ -63,7 +63,7 @@ def parse_command(command_str: str) -> ParsedCommand:
 
 
 def parse_do_block(command_str: str) -> list[ParsedCommand] | None:
-    """Parses a `do` block into commands, or returns None if it is invalid."""
+    """Parses a `do` block into commands, supporting optional leading indentation and bash-style syntax."""
     lines = command_str.splitlines()
     if not lines or lines[0].strip() != CommandType.DO.keyword:
         return None
@@ -80,10 +80,12 @@ def parse_do_block(command_str: str) -> list[ParsedCommand] | None:
         if not text:
             continue
 
-        if not text.startswith("- "):
-            return None
+        if text.startswith("- "):
+            command_text = text[2:].strip()
+        else:
+            command_text = text
 
-        cmd = parse_command(text[2:].strip())
+        cmd = parse_command(command_text)
         if cmd.type is CommandType.UNKNOWN or cmd.type is CommandType.DO:
             return None
 

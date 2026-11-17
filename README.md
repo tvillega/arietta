@@ -35,7 +35,9 @@ arietta self assign -- this will be fun.
 
 Use `do` to run several commands in a single comment.
 
-* List-like:
+* List mode:
+
+> Prepend each commands with `- `.
 
 ```text
 arietta do
@@ -44,13 +46,15 @@ arietta do
 - done
 ```
 
-* Bash-like:
+* Bash mode:
+
+> Prepend each command with zero or more spaces.
 
 ```text
 arietta do
-- rm label bug
-- add milestone Deployment
-- self assign
+  rm label bug
+  add milestone Deployment
+  self assign
 done
 ```
 
