@@ -8,9 +8,10 @@ version = "0.0.1"
 authors = [
   { name="Tom Villegas", email="tvillega@dcc.uchile.cl" },
 ]
-    description = "Granulated permissions to trusted contributors on non-organizational (personal) repositories."
+description = "Granulated permissions to trusted contributors on non-organizational (personal) repositories."
 readme = "README.md"
 requires-python = ">=3.11"
+license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
@@ -19,11 +20,14 @@ classifiers = [
 keywords = ["forge", "github", "permissions", "contributors"]
 dependencies = [
     "Flask",
-    "PyGithub",
-    "gunicorn",
+    "pyjwt",
+    "python-dotenv",
     "requests",
-    "python-dotenv"
 ]
+
+[project.optional-dependencies]
+dev = ["build", "twine"]
+deploy = ["gunicorn"]
 
 [project.scripts]
 arietta = "arietta.app:main"
@@ -31,3 +35,23 @@ arietta = "arietta.app:main"
 [project.urls]
 Homepage = "https://github.com/tvillega/arietta"
 Issues = "https://github.com/tvillega/arietta/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arietta"]
+exclude = [
+    "**/__pycache__",
+    "**/*.pyc",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.directory",
+    "/.idea",
+    "/.env",
+    "/private-key.pem",
+    "/dist",
+    "/graphify-out",
+    "/src/arietta/.devenv",
+    "**/__pycache__",
+    "**/*.pyc",
+]

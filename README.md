@@ -79,7 +79,6 @@ Arietta will react with a confused emoji for partial success.
 src/arietta/
 ├── app.py            # Flask app, /webhook route, command parsing, main()
 ├── __main__.py       # Enables `python -m arietta`
-├── arietta.json      # Sample config (not used at runtime)
 └── core/
     ├── auth.py       # Webhook HMAC verification, JWT generation, token exchange
     └── action.py     # GitHub REST calls: reactions, labels, milestones
@@ -119,6 +118,9 @@ uv sync
 
 # Or using pip
 pip install -r requirements.txt
+
+# To install the package with dev/deploy tooling instead
+pip install -e '.[dev,deploy]'
 ```
 
 ### 3. Configure Environment Variables
