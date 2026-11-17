@@ -1,26 +1,20 @@
 # Arietta
 
-A lightweight GitHub App bot that gives granulated permissions to trusted contributors on personal (non-organizational) repositories. Whitelisted users issue commands via issue/PR comments, and Arietta applies labels or milestones on their behalf — reacting with 👍 on full success, 😕 when some commands succeed, or 👎 on failure.
-
-No database, no frontend, no background workers — just a single Flask webhook endpoint.
+GitHub App bot that gives granulated permissions to trusted contributors on personal (non-organizational) repositories.
 
 ## Why
 
 GitHub's personal repositories work on an all-or-nothing fashion when it comes to permissions for collaborators.
 I just wanted to triage issues so I *designed* this solution for others to give me scoped permissions through the bot.
 
+## LLM
+
 This projects is openly pro-LLM's, however each change made by a model will get harshy reviewed by myself.
 A quick win means nothing if I can't understand it. Overengineering is rejected, this must stay simple.
 
 ## How It Works
 
-1. **GitHub delivers an `issue_comment` webhook** to `/webhook` whenever someone comments on an issue or PR.
-2. Arietta **verifies the HMAC signature** (`X-Hub-Signature-256`) to ensure the payload is authentic.
-3. It checks that the repository and comment author are in the configured **whitelists** and that the comment starts with the configured `BOT_NAME` prefix.
-4. The bot parses the command, authenticates to GitHub via a short-lived **installation access token** (JWT → token exchange), and calls the GitHub REST API.
-5. A **thumbs-up/thumbs-down reaction** is added to the comment as feedback.
-
-### Supported Commands
+The user writes a special comment on the issue tracker and Arietta picks it up as a command.
 
 | Command | Example | Effect |
 |---|---|---|
@@ -33,23 +27,46 @@ A quick win means nothing if I can't understand it. Overengineering is rejected,
 
 Anything after `--` is ignored by Arietta.
 
+```
+arietta self assign -- this will be fun.
+```
+
 ### Multi-command blocks
 
-Use `do` to run several commands from a single comment. Each command goes on its own line prefixed with `- `, and `done` (with or without a leading `- `) ends the block. Everything after `done` is ignored, so you can add free-form text without `--`:
+Use `do` to run several commands in a single comment.
+
+* List-like:
 
 ```text
 arietta do
 - add label bug
 - rm milestone
 - done
-
-Custom text
 ```
 
-The reaction is
-- 👍 when every command succeeds
-- 😕 when any command fail
-- 👎 when none succeed
+* Bash-like:
+
+```text
+arietta do
+- rm label bug
+- add milestone Deployment
+- self assign
+done
+
+Anything after `done` is ignored.
+
+```text
+arietta do
+- self unassign
+- rm milestone
+- add label wontfix
+- done
+
+
+We've evaluated your issues and we won't proceed with it.
+```
+
+Arietta will react with a confused emoji for partial success.
 
 ## Project Layout
 
@@ -107,8 +124,6 @@ Copy the example and fill in your values:
 cp .env-example .env
 ```
 
-Arietta loads `.env` automatically via `python-dotenv`, so no manual `export` is needed when running from the repository root. Docker Compose reads the same file.
-
 | Variable | Description |
 |---|---|
 | `GITHUB_APP_ID` | Your GitHub App's numeric ID |
@@ -122,34 +137,28 @@ Arietta loads `.env` automatically via `python-dotenv`, so no manual `export` is
 
 ### 4. Run
 
-**Development (Flask dev server):**
+**Development:**
 
 ```bash
-# Fill in .env first; it is loaded automatically.
+# Fill in .env first
 uv run python -m arietta
-# or after an editable install:
-arietta
 ```
 
-**Production (Docker Compose):**
-
-`docker-compose.yml` runs only the bot. You bring your own publicly reachable server (e.g. a reverse proxy providing TLS) and set the GitHub App's Webhook URL to `https://your-server.example.com/webhook`.
+**Production:**
 
 ```bash
 # Place your private key at ./private-key.pem
 docker compose up --build
 ```
 
-Gunicorn listens on `$PORT` inside the container; Docker Compose publishes it on fixed host port `5000`. Forward your proxy to `localhost:5000`.
-
 > [!NOTE]
-> For local development without a public webhook URL, start the bot with `docker compose up --build` and run the smee sidecar alongside it:
+> For local development without a public webhook URL run the smee sidecar alongside it:
 >
 > ```bash
 > docker compose -f docker-compose-smee.yml up
 > ```
 >
-> It uses host networking (Linux) to forward your [smee.io](https://smee.io) channel to `127.0.0.1:5000/webhook`, the bot's published port.
+> It'll forward your [smee.io](https://smee.io) channel to `127.0.0.1:5000/webhook`
 
 ### 5. Configure the Whitelists
 
@@ -159,8 +168,6 @@ Whitelists are read from the environment. Set them in `.env` (see the table abov
 USER_WHITELIST=tvillega,your-username
 REPO_WHITELIST=tvillega/arietta,your-username/your-repo
 ```
-
-`USER_WHITELIST` controls who may issue commands; `REPO_WHITELIST` controls which repositories the bot will act on. Both are comma-separated lists.
 
 ## Architecture
 
@@ -182,7 +189,3 @@ sequenceDiagram
     A->>API: POST /comments/{id}/reactions (👍)
     A-->>GH: 200 {"status": "success"}
 ```
-
-## License
-
-[AGPLv3+](https://www.gnu.org/licenses/agpl-3.0.html)
