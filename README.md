@@ -20,10 +20,8 @@ No database, no frontend, no background workers — just a single Flask webhook 
 | `arietta rm label <name>` | `arietta rm label bug` | Removes a label from the issue/PR |
 | `arietta add milestone <name>` | `arietta add milestone v1.0` | Assigns an existing milestone |
 | `arietta rm milestone <value>` | `arietta rm milestone v1.0` | Clears the milestone (value ignored) |
-| `arietta self assign <value>` | `arietta self assign me` | Assigns the commenting user (value ignored) |
-| `arietta self unassign <value>` | `arietta self unassign me` | Unassigns the commenting user (value ignored) |
-
-The parser requires a trailing value on every command; for the last three it is ignored.
+| `arietta self assign` | `arietta self assign` | Assigns the commenting user |
+| `arietta self unassign` | `arietta self unassign` | Unassigns the commenting user |
 
 ## Project Layout
 
