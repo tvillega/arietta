@@ -103,17 +103,23 @@ arietta
 
 **Production (Docker Compose):**
 
+`docker-compose.yml` runs only the bot. You bring your own publicly reachable server (e.g. a reverse proxy providing TLS) and set the GitHub App's Webhook URL to `https://your-server.example.com/webhook`.
+
 ```bash
 # Place your private key at ./private-key.pem
 docker compose up --build
 ```
 
-This starts:
-- **arietta-bot** — the Flask app behind Gunicorn on port 5000
-- **smee** — a [smee.io](https://smee.io) sidecar that forwards webhooks to the bot (useful when the server isn't publicly reachable)
+The bot is reachable on host port `5001` (mapped to container port `5000`); forward your proxy to `localhost:5001`.
 
 > [!NOTE]
-> For local development where the bot runs on the host (not in a container), use `docker-compose-smee.yml` instead — it runs only the smee sidecar with host networking, forwarding to `localhost:5050`.
+> For local development, run the bot on the host (`uv run python -m arietta`, port `5050`) and start only the smee sidecar:
+>
+> ```bash
+> docker compose -f docker-compose-smee.yml up
+> ```
+>
+> It forwards your [smee.io](https://smee.io) channel to `localhost:5050/webhook`.
 
 ### 5. Update the Whitelist
 
