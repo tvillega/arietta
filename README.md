@@ -77,25 +77,16 @@ cp .env-example .env
 
 Arietta loads `.env` automatically via `python-dotenv`, so no manual `export` is needed when running from the repository root. Docker Compose reads the same file.
 
-#### GitHub App credentials
-
-- `GITHUB_APP_ID` — Your GitHub App's numeric ID.
-- `GITHUB_PRIVATE_KEY_PATH` — Path to the `.pem` private key file, e.g. `./private-key.pem`.
-- `GITHUB_WEBHOOK_SECRET` — The webhook secret configured on the GitHub App.
-
-#### Bot settings
-
-- `BOT_NAME` — The command prefix, without a trailing space (e.g. `arietta`); Arietta appends the space itself. This variable must be set or webhook handling fails.
-- `PORT` — Flask dev-server port (default `5000`; `.env-example` uses `5050`).
-
-#### Whitelists
-
-- `USER_WHITELIST` — Comma-separated GitHub usernames allowed to issue commands, e.g. `tvillega,your-username`.
-- `REPO_WHITELIST` — Comma-separated `owner/repo` names the bot may act on, e.g. `tvillega/arietta`. Comments on other repositories are ignored.
-
-#### smee.io forwarding
-
-- `SMEE_URL` — The [smee.io](https://smee.io) channel URL used by `docker-compose-smee.yml` to forward webhooks to a bot running on the host.
+| Variable | Description |
+|---|---|
+| `GITHUB_APP_ID` | Your GitHub App's numeric ID |
+| `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file, e.g. `./private-key.pem` |
+| `GITHUB_WEBHOOK_SECRET` | The webhook secret configured on the GitHub App |
+| `BOT_NAME` | Command prefix without a trailing space (e.g. `arietta`); Arietta appends the space. Required — webhook handling fails if unset |
+| `PORT` | Flask dev-server port (default `5000`; `.env-example` uses `5050`) |
+| `USER_WHITELIST` | Comma-separated GitHub usernames allowed to issue commands, e.g. `tvillega,your-username` |
+| `REPO_WHITELIST` | Comma-separated `owner/repo` names the bot may act on, e.g. `tvillega/arietta`; comments on other repositories are ignored |
+| `SMEE_URL` | [smee.io](https://smee.io) channel URL used by `docker-compose-smee.yml` to forward webhooks to a bot running on the host |
 
 ### 4. Run
 
@@ -130,7 +121,7 @@ The bot is reachable on host port `5001` (mapped to container port `5000`); forw
 
 ### 5. Configure the Whitelists
 
-Whitelists are read from the environment; no code changes are needed. Set them in `.env` (see [Whitelists](#whitelists) above):
+Whitelists are read from the environment. Set them in `.env` (see the table above):
 
 ```dotenv
 USER_WHITELIST=tvillega,your-username
